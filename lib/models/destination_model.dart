@@ -6,7 +6,7 @@ class Destination {
   final String description;
   final String imageUrl;
 
-  const Destination({
+  Destination({
     required this.id,
     required this.name,
     required this.location,
@@ -16,13 +16,11 @@ class Destination {
 
   factory Destination.fromJson(Map<String, dynamic> json) {
     return Destination(
-      id: (json['id'] ?? '').toString(),
-      name: (json['name'] ?? json['spot_name'] ?? 'Unnamed Destination')
-          .toString(),
-      location: (json['location'] ?? 'Nusa Penida, Bali').toString(),
-      description: (json['description'] ?? 'No description available.')
-          .toString(),
-      imageUrl: (json['imageUrl'] ?? json['image_url'] ?? '').toString(),
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      imageUrl: (json['image_url'] ?? json['imageUrl'] ?? '').toString(),
     );
   }
 
@@ -32,7 +30,7 @@ class Destination {
       'name': name,
       'location': location,
       'description': description,
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
     };
   }
 }
