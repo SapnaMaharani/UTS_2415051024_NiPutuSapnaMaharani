@@ -2,6 +2,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/destination_model.dart';
+import '../models/itinerary_model.dart';
 import '../repositories/travel_repository.dart';
 
 class TravelProvider extends ChangeNotifier {
@@ -11,19 +12,38 @@ class TravelProvider extends ChangeNotifier {
     required this.repository,
   });
 
-  // State data destinasi
+  // ==========================================
+  // DESTINATION STATE
+  // ==========================================
+
   List<Destination> _destinations = [];
 
-  // State loading
   bool _isLoading = false;
 
-  // State error
   String? _errorMessage;
 
-  // Shared state: daftar favorite
+  // ==========================================
+  // ITINERARY STATE
+  // ==========================================
+
+  List<Itinerary> _itineraries = [];
+
+  bool _isItineraryLoading = false;
+
+  bool _isSaving = false;
+
+  String? _itineraryError;
+
+  // ==========================================
+  // FAVORITE STATE
+  // ==========================================
+
   final Set<String> _favoriteIds = {};
 
-  // Getter agar state dapat dibaca oleh halaman UI
+  // ==========================================
+  // GETTERS
+  // ==========================================
+
   List<Destination> get destinations => _destinations;
 
   bool get isLoading => _isLoading;
@@ -32,21 +52,75 @@ class TravelProvider extends ChangeNotifier {
 
   bool get hasError => _errorMessage != null;
 
+  List<Itinerary> get itineraries => _itineraries;
+
+  bool get isItineraryLoading => _isItineraryLoading;
+
+  bool get isSaving => _isSaving;
+
+  String? get itineraryError => _itineraryError;
+
   Set<String> get favoriteIds =>
       Set.unmodifiable(_favoriteIds);
 
   List<Destination> get favoriteDestinations {
     return _destinations
-        .where((destination) => _favoriteIds.contains(destination.id))
+        .where(
+          (destination) => _favoriteIds.contains(destination.id),
+        )
         .toList();
   }
 
-  // Mengecek apakah destinasi merupakan favorite
+  // ==========================================
+  // DESTINATION METHODS
+  // ==========================================
+
+  // Mengambil destinasi dari MockAPI.
+  Future<void> fetchDestinations() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _destinations = await repository.getDestinations();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Refresh destinasi.
+  Future<void> refreshDestinations() async {
+    await fetchDestinations();
+  }
+
+  // Mencari destinasi berdasarkan ID.
+  Destination? findDestinationById(String id) {
+    try {
+      return _destinations.firstWhere(
+        (destination) => destination.id == id,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Menghapus pesan error destinasi.
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // ==========================================
+  // FAVORITE METHODS
+  // ==========================================
+
   bool isFavorite(String destinationId) {
     return _favoriteIds.contains(destinationId);
   }
 
-  // Menambah atau menghapus favorite
   void toggleFavorite(String destinationId) {
     if (_favoriteIds.contains(destinationId)) {
       _favoriteIds.remove(destinationId);
@@ -57,42 +131,114 @@ class TravelProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Mengambil data destinasi dari REST API
-  Future<void> fetchDestinations() async {
-    _isLoading = true;
-    _errorMessage = null;
+  // ==========================================
+  // ITINERARY METHODS - SUPABASE
+  // ==========================================
+
+  // READ: Mengambil seluruh itinerary.
+  Future<void> fetchItineraries() async {
+    _isItineraryLoading = true;
+    _itineraryError = null;
     notifyListeners();
 
     try {
-      _destinations = await repository.getDestinations();
+      _itineraries = await repository.getItineraries();
     } catch (e) {
-      _errorMessage = e.toString();
-      _destinations = [];
+      _itineraryError = e.toString();
     } finally {
-      _isLoading = false;
+      _isItineraryLoading = false;
       notifyListeners();
     }
   }
 
-  // Memuat ulang data destinasi
-  Future<void> refreshDestinations() async {
-    await fetchDestinations();
-  }
-
-  // Menghapus pesan error
-  void clearError() {
-    _errorMessage = null;
+  // CREATE: Menambahkan itinerary baru.
+  Future<bool> addItinerary(Itinerary itinerary) async {
+    _isSaving = true;
+    _itineraryError = null;
     notifyListeners();
+
+    try {
+      final newItinerary = await repository.addItinerary(itinerary);
+
+      _itineraries.add(newItinerary);
+
+      _itineraries.sort(
+        (a, b) => a.visitDate.compareTo(b.visitDate),
+      );
+
+      return true;
+    } catch (e) {
+      _itineraryError = e.toString();
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
   }
 
-  // Mengambil detail destinasi dari data yang sudah tersedia
-  Destination? findDestinationById(String id) {
+  // UPDATE: Memperbarui itinerary.
+  Future<bool> updateItinerary(
+    String id,
+    Itinerary itinerary,
+  ) async {
+    _isSaving = true;
+    _itineraryError = null;
+    notifyListeners();
+
     try {
-      return _destinations.firstWhere(
-        (destination) => destination.id == id,
+      final updatedItinerary = await repository.updateItinerary(
+        id,
+        itinerary,
       );
-    } catch (_) {
-      return null;
+
+      final index = _itineraries.indexWhere(
+        (item) => item.id == id,
+      );
+
+      if (index != -1) {
+        _itineraries[index] = updatedItinerary;
+      }
+
+      _itineraries.sort(
+        (a, b) => a.visitDate.compareTo(b.visitDate),
+      );
+
+      return true;
+    } catch (e) {
+      _itineraryError = e.toString();
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
     }
+  }
+
+  // DELETE: Menghapus itinerary.
+  Future<bool> deleteItinerary(String id) async {
+    _isSaving = true;
+    _itineraryError = null;
+    notifyListeners();
+
+    try {
+      await repository.deleteItinerary(id);
+
+      _itineraries.removeWhere(
+        (item) => item.id == id,
+      );
+
+      return true;
+    } catch (e) {
+      _itineraryError = e.toString();
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  // Menghapus pesan error itinerary.
+  void clearItineraryError() {
+    _itineraryError = null;
+    notifyListeners();
   }
 }
