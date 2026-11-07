@@ -73,10 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildSectionTitle(
                     'My Travel Plans',
                     'View your trips',
+                    onTap: widget.onExplore,
                   ),
                   const SizedBox(height: 14),
 
                   _buildItinerarySummary(provider),
+                  const SizedBox(height: 22),
+
+                  // DASHBOARD STATISTICS
+                  _buildStatisticsSection(provider),
                   const SizedBox(height: 25),
 
                   _buildFavoriteSummary(provider),
@@ -475,6 +480,221 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  // DASHBOARD STATISTICS
+  Widget _buildStatisticsSection(TravelProvider provider) {
+    final itineraries = provider.itineraries;
+
+    final plannedCount = itineraries
+        .where((item) => item.status == 'Planned')
+        .length;
+
+    final ongoingCount = itineraries
+        .where((item) => item.status == 'Ongoing')
+        .length;
+
+    final completedCount = itineraries
+        .where((item) => item.status == 'Completed')
+        .length;
+
+    final totalBudget = itineraries.fold<double>(
+      0,
+      (total, item) => total + item.budget,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Travel Statistics',
+          style: TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.bold,
+            color: darkColor,
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // TOTAL ITINERARY
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatisticCard(
+                title: 'Total Plans',
+                value: '${itineraries.length}',
+                icon: Icons.luggage_outlined,
+                color: primaryColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatisticCard(
+                title: 'Planned',
+                value: '$plannedCount',
+                icon: Icons.event_note_outlined,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatisticCard(
+                title: 'Ongoing',
+                value: '$ongoingCount',
+                icon: Icons.directions_walk,
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatisticCard(
+                title: 'Completed',
+                value: '$completedCount',
+                icon: Icons.check_circle_outline,
+                color: Colors.green,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // TOTAL BUDGET
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE2F1EC),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: primaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total Estimated Budget',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _formatBudget(totalBudget),
+                      style: const TextStyle(
+                        color: darkColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 19,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        if (provider.isItineraryLoading)
+          const Padding(
+            padding: EdgeInsets.only(top: 12),
+            child: LinearProgressIndicator(
+              color: primaryColor,
+            ),
+          ),
+
+        if (provider.itineraryError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(
+              'Statistik mungkin belum diperbarui: '
+              '${provider.itineraryError}',
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 11,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // STATISTIC CARD
+  Widget _buildStatisticCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 27,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.bold,
+              color: darkColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // FORMAT BUDGET
+  String _formatBudget(double budget) {
+    return 'Rp ${budget.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (match) => '.',
+    )}';
   }
 
   // FAVORITE SUMMARY
