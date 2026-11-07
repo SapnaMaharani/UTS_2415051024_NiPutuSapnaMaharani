@@ -15,6 +15,12 @@ class MyItineraryScreen extends StatefulWidget {
 class _MyItineraryScreenState extends State<MyItineraryScreen> {
   static const Color primaryColor = Color(0xFF087F8C);
 
+  final TextEditingController _searchController =
+      TextEditingController();
+
+  String _searchQuery = '';
+  String _selectedFilter = 'All';
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +30,12 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
         context.read<TravelProvider>().fetchItineraries();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   String _formatDate(DateTime date) {
@@ -42,6 +54,33 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
     )}';
   }
 
+  // SEARCH DAN FILTER ITINERARY
+  List<Itinerary> _filterItineraries(
+    List<Itinerary> itineraries,
+  ) {
+    return itineraries.where((itinerary) {
+      final matchesSearch = itinerary.spotName
+          .toLowerCase()
+          .contains(_searchQuery.toLowerCase().trim());
+
+      final matchesStatus = _selectedFilter == 'All' ||
+          itinerary.status == _selectedFilter;
+
+      return matchesSearch && matchesStatus;
+    }).toList();
+  }
+
+  // RESET SEARCH DAN FILTER
+  void _resetFilter() {
+    _searchController.clear();
+
+    setState(() {
+      _searchQuery = '';
+      _selectedFilter = 'All';
+    });
+  }
+
+  // EDIT ITINERARY
   Future<void> _editItinerary(Itinerary itinerary) async {
     if (itinerary.id == null) return;
 
@@ -260,6 +299,7 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
     );
   }
 
+  // DELETE ITINERARY
   Future<void> _deleteItinerary(Itinerary itinerary) async {
     if (itinerary.id == null) return;
 
@@ -307,6 +347,7 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
     );
   }
 
+  // STATUS BADGE
   Widget _statusBadge(String status) {
     final color = switch (status) {
       'Completed' => Colors.green,
@@ -334,6 +375,7 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
     );
   }
 
+  // INFORMASI ITINERARY
   Widget _infoRow(
     IconData icon,
     String label,
@@ -361,6 +403,7 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
     );
   }
 
+  // CARD ITINERARY
   Widget _buildItineraryCard(Itinerary itinerary) {
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -558,11 +601,15 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
             );
           }
 
+          final filteredItineraries =
+              _filterItineraries(provider.itineraries);
+
           return RefreshIndicator(
             onRefresh: provider.fetchItineraries,
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // HEADER
                 Container(
                   padding: const EdgeInsets.all(18),
                   margin: const EdgeInsets.only(bottom: 18),
@@ -592,8 +639,11 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${provider.itineraries.length} rencana perjalanan tersimpan',
-                              style: const TextStyle(color: Colors.white70),
+                              '${filteredItineraries.length} dari '
+                              '${provider.itineraries.length} rencana perjalanan',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                              ),
                             ),
                           ],
                         ),
@@ -601,7 +651,125 @@ class _MyItineraryScreenState extends State<MyItineraryScreen> {
                     ],
                   ),
                 ),
-                ...provider.itineraries.map(_buildItineraryCard),
+
+                // SEARCH
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Cari nama destinasi...',
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: primaryColor,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                            icon: const Icon(Icons.close),
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // FILTER STATUS
+                const Text(
+                  'Filter Status',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      'All',
+                      'Planned',
+                      'Ongoing',
+                      'Completed',
+                    ].map((status) {
+                      final isSelected = _selectedFilter == status;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(status),
+                          selected: isSelected,
+                          selectedColor: primaryColor,
+                          backgroundColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedFilter = status;
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // HASIL PENCARIAN DAN FILTER
+                if (filteredItineraries.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 55),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.search_off,
+                          size: 55,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Itinerary Tidak Ditemukan',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Coba ubah kata pencarian atau filter status.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        TextButton(
+                          onPressed: _resetFilter,
+                          child: const Text('Reset Filter'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...filteredItineraries.map(_buildItineraryCard),
               ],
             ),
           );
