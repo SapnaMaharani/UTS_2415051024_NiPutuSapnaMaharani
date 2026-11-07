@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'destination_list_screen.dart';
 import 'favorite_screen.dart';
+import 'my_itinerary_screen.dart';
 import 'profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ),
     const DestinationListScreen(),
     const FavoriteScreen(),
+    const MyItineraryScreen(),
     const ProfileScreen(),
   ];
 
@@ -65,8 +67,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             backgroundColor: Colors.white,
             selectedItemColor: primaryColor,
             unselectedItemColor: Colors.grey,
-            selectedFontSize: 12,
-            unselectedFontSize: 11,
+            selectedFontSize: 11,
+            unselectedFontSize: 10,
             showUnselectedLabels: true,
             elevation: 0,
             items: const [
@@ -84,6 +86,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 icon: Icon(Icons.favorite_border),
                 activeIcon: Icon(Icons.favorite),
                 label: 'Favorite',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.luggage_outlined),
+                activeIcon: Icon(Icons.luggage),
+                label: 'My Trip',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline),
