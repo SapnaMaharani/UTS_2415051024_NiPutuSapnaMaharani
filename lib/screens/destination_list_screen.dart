@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/destination_model.dart';
 import '../providers/travel_provider.dart';
+import 'destination_detail_screen.dart';
 
 class DestinationListScreen extends StatefulWidget {
   const DestinationListScreen({super.key});
@@ -26,6 +28,17 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _openDetail(Destination destination) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DestinationDetailScreen(
+          destination: destination,
+        ),
+      ),
+    );
   }
 
   @override
@@ -158,7 +171,7 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
 
   Widget _buildDestinationContent(
     TravelProvider provider,
-    List destinations,
+    List<Destination> destinations,
   ) {
     if (provider.isLoading && provider.destinations.isEmpty) {
       return const Center(
@@ -221,13 +234,14 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
-  Widget _buildGridCard(dynamic destination, TravelProvider provider) {
+  Widget _buildGridCard(
+    Destination destination,
+    TravelProvider provider,
+  ) {
     final isFavorite = provider.isFavorite(destination.id);
 
     return GestureDetector(
-      onTap: () {
-        _showDetailMessage(destination.name);
-      },
+      onTap: () => _openDetail(destination),
       child: Card(
         color: Colors.white,
         elevation: 2,
@@ -307,7 +321,10 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
-  Widget _buildListCard(dynamic destination, TravelProvider provider) {
+  Widget _buildListCard(
+    Destination destination,
+    TravelProvider provider,
+  ) {
     final isFavorite = provider.isFavorite(destination.id);
 
     return Card(
@@ -319,9 +336,7 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          _showDetailMessage(destination.name);
-        },
+        onTap: () => _openDetail(destination),
         child: Row(
           children: [
             Image.network(
@@ -433,15 +448,6 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showDetailMessage(String name) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$name selected. Detail page is coming next!'),
-        backgroundColor: primaryColor,
       ),
     );
   }

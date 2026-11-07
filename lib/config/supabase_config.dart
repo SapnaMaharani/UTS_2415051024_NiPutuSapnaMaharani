@@ -1,7 +1,7 @@
 class SupabaseConfig {
   // URL proyek Supabase
   static const String supabaseUrl =
-      'https://xrvqvimcqlpebdaiwte.supabase.co';
+      'https://xrvrqvimcqlpebdaiwte.supabase.co';
 
   // Publishable Key Supabase
   static const String publishableKey =
