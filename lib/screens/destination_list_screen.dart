@@ -1,9 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/destination_model.dart';
 import '../providers/travel_provider.dart';
+import '../widgets/destination_card.dart';
 import 'destination_detail_screen.dart';
 
 class DestinationListScreen extends StatefulWidget {
@@ -19,7 +19,8 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
   static const Color backgroundColor = Color(0xFFF5F8F5);
   static const Color darkColor = Color(0xFF173B3D);
 
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController =
+      TextEditingController();
 
   String _searchQuery = '';
   bool _isGridView = true;
@@ -60,26 +61,39 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
       body: SafeArea(
         child: Consumer<TravelProvider>(
           builder: (context, provider, child) {
-            final destinations = provider.destinations.where((destination) {
+            final destinations =
+                provider.destinations.where((destination) {
+              final query = _searchQuery.toLowerCase();
+
               return destination.name
                       .toLowerCase()
-                      .contains(_searchQuery.toLowerCase()) ||
+                      .contains(query) ||
                   destination.location
                       .toLowerCase()
-                      .contains(_searchQuery.toLowerCase());
+                      .contains(query);
             }).toList();
 
-            return Column(
-              children: [
-                _buildSearchBar(),
-                _buildToolbar(destinations.length),
-                Expanded(
-                  child: _buildDestinationContent(
-                    provider,
-                    destinations,
-                  ),
-                ),
-              ],
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 700;
+
+                return Column(
+                  children: [
+                    _buildSearchBar(isWide),
+                    _buildToolbar(
+                      destinations.length,
+                      isWide,
+                    ),
+                    Expanded(
+                      child: _buildDestinationContent(
+                        provider,
+                        destinations,
+                        constraints.maxWidth,
+                      ),
+                    ),
+                  ],
+                );
+              },
             );
           },
         ),
@@ -87,9 +101,15 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
+  // SEARCH BAR
+  Widget _buildSearchBar(bool isWide) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+      padding: EdgeInsets.fromLTRB(
+        isWide ? 28 : 20,
+        12,
+        isWide ? 28 : 20,
+        10,
+      ),
       child: TextField(
         controller: _searchController,
         onChanged: (value) {
@@ -116,7 +136,9 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
               : null,
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 15,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -126,9 +148,13 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
-  Widget _buildToolbar(int count) {
+  // TOOLBAR
+  Widget _buildToolbar(int count, bool isWide) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isWide ? 28 : 20,
+        vertical: 10,
+      ),
       child: Row(
         children: [
           Text(
@@ -169,9 +195,11 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
+  // DESTINATION CONTENT
   Widget _buildDestinationContent(
     TravelProvider provider,
     List<Destination> destinations,
+    double availableWidth,
   ) {
     if (provider.isLoading && provider.destinations.isEmpty) {
       return const Center(
@@ -199,133 +227,125 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     }
 
     if (_isGridView) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final crossAxisCount =
-              constraints.maxWidth >= 700 ? 3 : 2;
-
-          return GridView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
-            itemCount: destinations.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 0.72,
-            ),
-            itemBuilder: (context, index) {
-              final destination = destinations[index];
-
-              return _buildGridCard(destination, provider);
-            },
-          );
-        },
+      return _buildResponsiveGrid(
+        destinations,
+        provider,
+        availableWidth,
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
+    return _buildResponsiveList(
+      destinations,
+      provider,
+      availableWidth,
+    );
+  }
+
+  // RESPONSIVE GRID
+  Widget _buildResponsiveGrid(
+    List<Destination> destinations,
+    TravelProvider provider,
+    double availableWidth,
+  ) {
+    final int crossAxisCount;
+
+    if (availableWidth >= 1100) {
+      crossAxisCount = 5;
+    } else if (availableWidth >= 850) {
+      crossAxisCount = 4;
+    } else if (availableWidth >= 550) {
+      crossAxisCount = 3;
+    } else {
+      crossAxisCount = 2;
+    }
+
+    final horizontalPadding =
+        availableWidth >= 700 ? 28.0 : 20.0;
+
+    const spacing = 14.0;
+
+    // Kartu dibuat lebih tinggi agar teks dan gambar tidak overflow.
+    final childAspectRatio =
+        availableWidth >= 700 ? 0.82 : 0.72;
+
+    return GridView.builder(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        5,
+        horizontalPadding,
+        20,
+      ),
       itemCount: destinations.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: spacing,
+        mainAxisSpacing: spacing,
+        childAspectRatio: childAspectRatio,
+      ),
       itemBuilder: (context, index) {
         final destination = destinations[index];
 
-        return _buildListCard(destination, provider);
+        return _buildDestinationCard(
+          destination,
+          provider,
+        );
       },
     );
   }
 
-  Widget _buildGridCard(
-    Destination destination,
+  // RESPONSIVE LIST
+  Widget _buildResponsiveList(
+    List<Destination> destinations,
     TravelProvider provider,
+    double availableWidth,
   ) {
-    final isFavorite = provider.isFavorite(destination.id);
+    final horizontalPadding =
+        availableWidth >= 700 ? 28.0 : 20.0;
 
-    return GestureDetector(
-      onTap: () => _openDetail(destination),
-      child: Card(
-        color: Colors.white,
-        elevation: 2,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    destination.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _imagePlaceholder();
-                    },
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: _favoriteButton(
-                      provider,
-                      destination.id,
-                      isFavorite,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(11),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    destination.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: darkColor,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: primaryColor,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          destination.location,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return ListView.builder(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        5,
+        horizontalPadding,
+        20,
       ),
+      itemCount: destinations.length,
+      itemBuilder: (context, index) {
+        final destination = destinations[index];
+
+        return _buildListCard(
+          destination,
+          provider,
+          availableWidth,
+        );
+      },
     );
   }
 
-  Widget _buildListCard(
+  // REUSABLE DESTINATION CARD
+  Widget _buildDestinationCard(
     Destination destination,
     TravelProvider provider,
   ) {
+    return DestinationCard(
+      destination: destination,
+      isFavorite: provider.isFavorite(destination.id),
+      onTap: () => _openDetail(destination),
+      onFavoriteTap: () {
+        provider.toggleFavorite(destination.id);
+      },
+    );
+  }
+
+  // LIST CARD
+  Widget _buildListCard(
+    Destination destination,
+    TravelProvider provider,
+    double availableWidth,
+  ) {
     final isFavorite = provider.isFavorite(destination.id);
+
+    final imageSize = availableWidth >= 700 ? 145.0 : 115.0;
 
     return Card(
       color: Colors.white,
@@ -341,13 +361,13 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
           children: [
             Image.network(
               destination.imageUrl,
-              width: 115,
-              height: 115,
+              width: imageSize,
+              height: imageSize,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return SizedBox(
-                  width: 115,
-                  height: 115,
+                  width: imageSize,
+                  height: imageSize,
                   child: _imagePlaceholder(),
                 );
               },
@@ -393,6 +413,7 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
+  // FAVORITE BUTTON
   Widget _favoriteButton(
     TravelProvider provider,
     String id,
@@ -409,6 +430,7 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
+  // IMAGE PLACEHOLDER
   Widget _imagePlaceholder() {
     return Container(
       color: const Color(0xFFDCEDEA),
@@ -422,6 +444,7 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
+  // EMPTY / ERROR MESSAGE
   Widget _buildMessage(
     String message,
     IconData icon, {
@@ -433,12 +456,18 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 45, color: Colors.grey),
+            Icon(
+              icon,
+              size: 45,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.black54),
+              style: const TextStyle(
+                color: Colors.black54,
+              ),
             ),
             if (onRetry != null)
               TextButton.icon(

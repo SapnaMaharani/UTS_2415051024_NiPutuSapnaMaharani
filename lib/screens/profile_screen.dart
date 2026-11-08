@@ -32,6 +32,8 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             children: [
               const SizedBox(height: 15),
+
+              // PROFILE PHOTO AND INFORMATION
               Center(
                 child: Column(
                   children: [
@@ -44,26 +46,42 @@ class ProfileScreen extends StatelessWidget {
                           width: 2,
                         ),
                       ),
-                      child: const CircleAvatar(
-                        radius: 48,
-                        backgroundColor: Color(0xFFDCEDEA),
-                        child: Icon(
-                          Icons.person,
-                          size: 55,
-                          color: primaryColor,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/profile.jpg',
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 96,
+                              height: 96,
+                              color: const Color(0xFFDCEDEA),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.person,
+                                size: 55,
+                                color: primaryColor,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 14),
+
                     const Text(
-                      'Traveler',
+                      'Sapna Maharani',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: darkColor,
                       ),
                     ),
+
                     const SizedBox(height: 5),
+
                     const Text(
                       'Nusa Penida Travel Buddy',
                       style: TextStyle(
@@ -74,7 +92,10 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
               const SizedBox(height: 30),
+
+              // TRAVEL ACTIVITY
               const Text(
                 'My Travel Activity',
                 style: TextStyle(
@@ -83,7 +104,9 @@ class ProfileScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 14),
+
               Row(
                 children: [
                   Expanded(
@@ -111,7 +134,10 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               const SizedBox(height: 30),
+
+              // APPLICATION MENU
               const Text(
                 'Application',
                 style: TextStyle(
@@ -120,7 +146,10 @@ class ProfileScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 12),
+
+              // ABOUT APPLICATION
               _buildMenuItem(
                 icon: Icons.info_outline,
                 title: 'About Application',
@@ -145,6 +174,8 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
+
+              // REFRESH DATA
               _buildMenuItem(
                 icon: Icons.refresh,
                 title: 'Refresh Data',
@@ -163,6 +194,8 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
+
+              // PRIVACY
               _buildMenuItem(
                 icon: Icons.privacy_tip_outlined,
                 title: 'Privacy',
@@ -189,7 +222,10 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
+
               const SizedBox(height: 25),
+
+              // FOOTER
               const Center(
                 child: Text(
                   'Made with love for Nusa Penida',
@@ -206,6 +242,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // REUSABLE STAT CARD
   Widget _buildStatCard(
     IconData icon,
     String value,
@@ -222,7 +259,11 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: primaryColor, size: 25),
+          Icon(
+            icon,
+            color: primaryColor,
+            size: 25,
+          ),
           const SizedBox(height: 9),
           Text(
             value,
@@ -246,6 +287,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // REUSABLE MENU ITEM
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -270,7 +312,10 @@ class ProfileScreen extends StatelessWidget {
             color: primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: primaryColor),
+          child: Icon(
+            icon,
+            color: primaryColor,
+          ),
         ),
         title: Text(
           title,

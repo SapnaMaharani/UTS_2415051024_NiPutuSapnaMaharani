@@ -1,8 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/travel_provider.dart';
+import '../widgets/stat_card.dart';
+import '../widgets/custom_section_title.dart';
 import 'destination_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -80,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildItinerarySummary(provider),
                   const SizedBox(height: 22),
 
-                  // DASHBOARD STATISTICS
                   _buildStatisticsSection(provider),
                   const SizedBox(height: 25),
 
@@ -238,45 +238,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // SECTION TITLE
+  // REUSABLE SECTION TITLE
   Widget _buildSectionTitle(
     String title,
     String subtitle, {
     VoidCallback? onTap,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.bold,
-            color: darkColor,
-          ),
-        ),
-        if (onTap != null)
-          TextButton(
-            onPressed: onTap,
-            child: Text(
-              subtitle,
-              style: const TextStyle(
-                color: primaryColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          )
-        else
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: primaryColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-      ],
+    return CustomSectionTitle(
+      title: title,
+      actionText: subtitle,
+      onActionTap: onTap,
     );
   }
 
@@ -516,7 +487,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 14),
 
-        // TOTAL ITINERARY
         Row(
           children: [
             Expanded(
@@ -639,53 +609,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // STATISTIC CARD
+  // REUSABLE STATISTIC CARD
   Widget _buildStatisticCard({
     required String title,
     required String value,
     required IconData icon,
     required Color color,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 27,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 23,
-              fontWeight: FontWeight.bold,
-              color: darkColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
+    return StatCard(
+      icon: icon,
+      value: value,
+      label: title,
+      iconColor: color,
     );
   }
 
