@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +26,8 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
   String _searchQuery = '';
   bool _isGridView = true;
 
+  String _sortMode = 'default';
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -40,6 +43,85 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
         ),
       ),
     );
+  }
+
+  String _formatRupiah(double value) {
+    final rounded = value.round().toString();
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < rounded.length; i++) {
+      if (i > 0 && (rounded.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(rounded[i]);
+    }
+
+    return 'Rp ${buffer.toString()}';
+  }
+
+  List<Destination> _sortDestinations(
+    List<Destination> destinations,
+  ) {
+    final result = List<Destination>.from(destinations);
+
+    switch (_sortMode) {
+      case 'cheapest':
+        result.sort((a, b) {
+          final priceA = a.entranceFee;
+          final priceB = b.entranceFee;
+
+          if (priceA == null && priceB == null) return 0;
+          if (priceA == null) return 1;
+          if (priceB == null) return -1;
+
+          return priceA.compareTo(priceB);
+        });
+        break;
+
+      case 'expensive':
+        result.sort((a, b) {
+          final priceA = a.entranceFee;
+          final priceB = b.entranceFee;
+
+          if (priceA == null && priceB == null) return 0;
+          if (priceA == null) return 1;
+          if (priceB == null) return -1;
+
+          return priceB.compareTo(priceA);
+        });
+        break;
+
+      case 'rating':
+        result.sort((a, b) {
+          final ratingA = a.rating;
+          final ratingB = b.rating;
+
+          if (ratingA == null && ratingB == null) return 0;
+          if (ratingA == null) return 1;
+          if (ratingB == null) return -1;
+
+          return ratingB.compareTo(ratingA);
+        });
+        break;
+
+      default:
+        break;
+    }
+
+    return result;
+  }
+
+  String get _sortLabel {
+    switch (_sortMode) {
+      case 'cheapest':
+        return 'Cheapest';
+      case 'expensive':
+        return 'Most Expensive';
+      case 'rating':
+        return 'Highest Rated';
+      default:
+        return 'Default';
+    }
   }
 
   @override
@@ -61,7 +143,7 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
       body: SafeArea(
         child: Consumer<TravelProvider>(
           builder: (context, provider, child) {
-            final destinations =
+            final searchedDestinations =
                 provider.destinations.where((destination) {
               final query = _searchQuery.toLowerCase();
 
@@ -73,6 +155,9 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
                       .contains(query);
             }).toList();
 
+            final destinations =
+                _sortDestinations(searchedDestinations);
+
             return LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth >= 700;
@@ -80,10 +165,12 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
                 return Column(
                   children: [
                     _buildSearchBar(isWide),
+
                     _buildToolbar(
                       destinations.length,
                       isWide,
                     ),
+
                     Expanded(
                       child: _buildDestinationContent(
                         provider,
@@ -148,7 +235,7 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     );
   }
 
-  // TOOLBAR
+  // TOOLBAR AND SORTING
   Widget _buildToolbar(int count, bool isWide) {
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -157,15 +244,113 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
       ),
       child: Row(
         children: [
-          Text(
-            '$count places found',
-            style: const TextStyle(
-              color: darkColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
+          Expanded(
+            child: Text(
+              '$count places found',
+              style: const TextStyle(
+                color: darkColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ),
-          const Spacer(),
+
+          // SORT DROPDOWN
+          PopupMenuButton<String>(
+            tooltip: 'Sort destinations',
+            onSelected: (value) {
+              setState(() {
+                _sortMode = value;
+              });
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'default',
+                child: Row(
+                  children: [
+                    Icon(Icons.list, size: 19),
+                    SizedBox(width: 10),
+                    Text('Default'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'cheapest',
+                child: Row(
+                  children: [
+                    Icon(Icons.arrow_upward, size: 19),
+                    SizedBox(width: 10),
+                    Text('Cheapest'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'expensive',
+                child: Row(
+                  children: [
+                    Icon(Icons.arrow_downward, size: 19),
+                    SizedBox(width: 10),
+                    Text('Most Expensive'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'rating',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.star,
+                      size: 19,
+                      color: Colors.amber,
+                    ),
+                    SizedBox(width: 10),
+                    Text('Highest Rated'),
+                  ],
+                ),
+              ),
+            ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.black12,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.sort,
+                    size: 18,
+                    color: primaryColor,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    _sortLabel,
+                    style: const TextStyle(
+                      color: darkColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 17,
+                    color: darkColor,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
           IconButton(
             tooltip: 'Grid view',
             onPressed: () {
@@ -175,9 +360,12 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
             },
             icon: Icon(
               Icons.grid_view_rounded,
-              color: _isGridView ? primaryColor : Colors.grey,
+              color: _isGridView
+                  ? primaryColor
+                  : Colors.grey,
             ),
           ),
+
           IconButton(
             tooltip: 'List view',
             onPressed: () {
@@ -187,7 +375,9 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
             },
             icon: Icon(
               Icons.view_list_rounded,
-              color: !_isGridView ? primaryColor : Colors.grey,
+              color: !_isGridView
+                  ? primaryColor
+                  : Colors.grey,
             ),
           ),
         ],
@@ -201,7 +391,8 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     List<Destination> destinations,
     double availableWidth,
   ) {
-    if (provider.isLoading && provider.destinations.isEmpty) {
+    if (provider.isLoading &&
+        provider.destinations.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(
           color: primaryColor,
@@ -209,7 +400,8 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
       );
     }
 
-    if (provider.hasError && provider.destinations.isEmpty) {
+    if (provider.hasError &&
+        provider.destinations.isEmpty) {
       return _buildMessage(
         'Unable to load destinations.',
         Icons.wifi_off,
@@ -264,7 +456,6 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
 
     const spacing = 14.0;
 
-    // Kartu dibuat lebih tinggi agar teks dan gambar tidak overflow.
     final childAspectRatio =
         availableWidth >= 700 ? 0.82 : 0.72;
 
@@ -276,7 +467,8 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
         20,
       ),
       itemCount: destinations.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate:
+          SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: spacing,
         mainAxisSpacing: spacing,
@@ -343,9 +535,11 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
     TravelProvider provider,
     double availableWidth,
   ) {
-    final isFavorite = provider.isFavorite(destination.id);
+    final isFavorite =
+        provider.isFavorite(destination.id);
 
-    final imageSize = availableWidth >= 700 ? 145.0 : 115.0;
+    final imageSize =
+        availableWidth >= 700 ? 145.0 : 115.0;
 
     return Card(
       color: Colors.white,
@@ -372,11 +566,13 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
                 );
               },
             ),
+
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     Text(
                       destination.name,
@@ -388,7 +584,9 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
                         fontSize: 14,
                       ),
                     ),
+
                     const SizedBox(height: 7),
+
                     Text(
                       destination.location,
                       maxLines: 2,
@@ -398,10 +596,15 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
                         fontSize: 12,
                       ),
                     ),
+
+                    const SizedBox(height: 8),
+
+                    _buildPriceAndRating(destination),
                   ],
                 ),
               ),
             ),
+
             _favoriteButton(
               provider,
               destination.id,
@@ -410,6 +613,59 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // PRICE AND RATING INFORMATION
+  Widget _buildPriceAndRating(Destination destination) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 5,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.confirmation_number_outlined,
+              size: 14,
+              color: primaryColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              destination.entranceFee == null
+                  ? 'Price unavailable'
+                  : _formatRupiah(destination.entranceFee!),
+              style: const TextStyle(
+                color: primaryColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.star,
+              size: 14,
+              color: Colors.amber,
+            ),
+            const SizedBox(width: 3),
+            Text(
+              destination.rating == null
+                  ? 'No rating'
+                  : destination.rating!.toStringAsFixed(1),
+              style: const TextStyle(
+                color: darkColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -424,7 +680,9 @@ class _DestinationListScreenState extends State<DestinationListScreen> {
         provider.toggleFavorite(id);
       },
       icon: Icon(
-        isFavorite ? Icons.favorite : Icons.favorite_border,
+        isFavorite
+            ? Icons.favorite
+            : Icons.favorite_border,
         color: Colors.redAccent,
       ),
     );
