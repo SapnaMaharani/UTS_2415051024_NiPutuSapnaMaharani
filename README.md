@@ -558,5 +558,36 @@ https://github.com/SapnaMaharani/UTS_2415051024_NiPutuSapnaMaharani
 
 ---
 
+## Application Screenshots
+
+### 1. Home
+![Home Screen](screenshots/home.png)
+
+### 2. Explore - Destination List
+![Explore Screen](screenshots/explore.png)
+
+### 3. Destination Detail
+![Destination Detail](screenshots/destination_detail.png)
+
+### 4. Add Itinerary
+![Add Itinerary](screenshots/add_itinerary.png)
+
+### 5. Edit Itinerary
+![Edit Itinerary](screenshots/edit_itinerary.png)
+
+### 6. My Itinerary
+![My Itinerary](screenshots/my_trip.png)
+
+### 7. Favorite
+![Favorite Screen](screenshots/Favorite.png)
+
+### 8. Profile
+![Profile Screen](screenshots/profile.png)
+
+### 9. Responsive Layout
+![Responsive Layout](screenshots/responsive.png)
+
+---
+
 **Nusa Penida Travel Buddy**  
 *Explore Nusa Penida, Plan Your Journey!*
